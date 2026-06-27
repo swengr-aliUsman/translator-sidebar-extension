@@ -4,11 +4,18 @@ async function translateText(text, targetLang = 'en') {
     return { ok: true, sourceText: '', translation: '', detectedLang: 'unknown' };
   }
 
-  const encodedText = encodeURIComponent(normalized.slice(0, 1500));
-  const url = `https://api.mymemory.translated.net/get?q=${encodedText}&langpair=auto|${targetLang}`;
-
-  const response = await fetch(url, {
-    headers: { Accept: 'application/json' }
+  const response = await fetch('https://libretranslate.com/translate', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      q: normalized.slice(0, 2000),
+      source: 'auto',
+      target: targetLang,
+      format: 'text'
+    })
   });
 
   if (!response.ok) {
@@ -16,14 +23,13 @@ async function translateText(text, targetLang = 'en') {
   }
 
   const data = await response.json();
-  const translatedText = data?.responseData?.translatedText || data?.matches?.[0]?.translation || normalized;
-  const detectedLang = data?.responseData?.match?.[0]?.language || 'unknown';
+  const translatedText = data?.translatedText || normalized;
 
   return {
     ok: true,
     sourceText: normalized,
     translation: translatedText,
-    detectedLang
+    detectedLang: data?.detected_language || 'unknown'
   };
 }
 
