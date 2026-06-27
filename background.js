@@ -4,28 +4,24 @@ async function translateText(text, targetLang = 'en') {
     return { ok: true, sourceText: '', translation: '', detectedLang: 'unknown' };
   }
 
-  const translationMap = {
-    en: { hello: 'hello', world: 'world', test: 'test' },
-    es: { hello: 'hola', world: 'mundo', test: 'prueba' },
-    fr: { hello: 'bonjour', world: 'monde', test: 'test' },
-    de: { hello: 'hallo', world: 'welt', test: 'test' },
-    it: { hello: 'ciao', world: 'mondo', test: 'test' },
-    pt: { hello: 'olá', world: 'mundo', test: 'teste' },
-    ja: { hello: 'こんにちは', world: '世界', test: 'テスト' },
-    ko: { hello: '안녕하세요', world: '세계', test: '테스트' },
-    ar: { hello: 'مرحبا', world: 'عالم', test: 'اختبار' },
-    zh: { hello: '你好', world: '世界', test: '测试' }
-  };
+  const endpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(normalized)}`;
+  const response = await fetch(endpoint);
 
-  const targetMap = translationMap[targetLang] || translationMap.en;
-  const lowerText = normalized.toLowerCase();
-  const translated = targetMap[lowerText] || normalized;
+  if (!response.ok) {
+    throw new Error(`Translation API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const detectedLang = Array.isArray(data) && data[2] ? data[2] : 'unknown';
+  const translation = Array.isArray(data) && Array.isArray(data[0])
+    ? data[0].map((segment) => segment[0]).join('')
+    : normalized;
 
   return {
     ok: true,
     sourceText: normalized,
-    translation: translated,
-    detectedLang: 'unknown'
+    translation,
+    detectedLang
   };
 }
 
