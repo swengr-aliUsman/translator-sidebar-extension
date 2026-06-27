@@ -27,6 +27,20 @@ async function translateText(text, targetLang = 'en') {
   };
 }
 
+function notifySidebar(payload) {
+  chrome.storage.session.set({
+    lastSelection: payload.sourceText || '',
+    lastTranslation: payload.translation || '',
+    targetLanguage: payload.targetLang || 'en'
+  });
+
+  chrome.runtime.sendMessage(payload, () => {
+    if (chrome.runtime.lastError) {
+      console.warn('Sidebar message failed:', chrome.runtime.lastError.message);
+    }
+  });
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setOptions({
     enabled: true,
@@ -37,6 +51,12 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.action.onClicked.addListener((tab) => {
+  if (!tab?.id) return;
+  chrome.sidePanel.setOptions({
+    enabled: true,
+    path: 'sidebar.html',
+    tabId: tab.id
+  });
   chrome.sidePanel.open({ tabId: tab.id });
 });
 
@@ -46,12 +66,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         const targetLang = message.targetLang || result.targetLanguage || 'en';
         const payload = await translateText(message.text, targetLang);
-        await chrome.storage.session.set({
-          lastSelection: payload.sourceText,
-          lastTranslation: payload.translation,
-          targetLanguage: targetLang
-        });
-        chrome.runtime.sendMessage({
+        notifySidebar({
           action: 'selection-translated',
           sourceText: payload.sourceText,
           translation: payload.translation,

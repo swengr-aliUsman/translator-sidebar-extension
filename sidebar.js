@@ -53,6 +53,18 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 });
 
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== 'session') return;
+  if (changes.lastSelection || changes.lastTranslation) {
+    const sourceText = changes.lastSelection?.newValue || '';
+    const translation = changes.lastTranslation?.newValue || '';
+    updateResult(sourceText, translation);
+    if (sourceText && translation) {
+      setStatus('Updated from your latest selection.');
+    }
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.session.get(['targetLanguage', 'lastSelection', 'lastTranslation'], (result) => {
     targetLangEl.value = result.targetLanguage || 'en';

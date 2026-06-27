@@ -1,3 +1,5 @@
+let lastSentSelection = '';
+
 function getSelectionText() {
   const selection = window.getSelection();
   return selection?.toString()?.trim() || '';
@@ -5,21 +7,20 @@ function getSelectionText() {
 
 function sendSelectionToSidebar() {
   const selectedText = getSelectionText();
-  if (!selectedText) return;
+  if (!selectedText) {
+    lastSentSelection = '';
+    return;
+  }
 
+  if (selectedText === lastSentSelection) return;
+
+  lastSentSelection = selectedText;
   chrome.runtime.sendMessage({
     action: 'translate-selection',
     text: selectedText
   });
 }
 
-document.addEventListener('mouseup', () => {
-  const selectedText = getSelectionText();
-  if (!selectedText) return;
-
-  setTimeout(() => {
-    if (getSelectionText() === selectedText) {
-      sendSelectionToSidebar();
-    }
-  }, 80);
-});
+document.addEventListener('mouseup', sendSelectionToSidebar);
+document.addEventListener('keyup', sendSelectionToSidebar);
+document.addEventListener('selectionchange', sendSelectionToSidebar);
