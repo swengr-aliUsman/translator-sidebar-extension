@@ -21,6 +21,11 @@ function sendSelectionToSidebar() {
   });
 }
 
-document.addEventListener('mouseup', sendSelectionToSidebar);
-document.addEventListener('keyup', sendSelectionToSidebar);
-document.addEventListener('selectionchange', sendSelectionToSidebar);
+function scheduleSelectionSync() {
+  window.setTimeout(sendSelectionToSidebar, 50);
+}
+
+document.addEventListener('mouseup', scheduleSelectionSync);
+document.addEventListener('keyup', scheduleSelectionSync);
+document.addEventListener('selectionchange', scheduleSelectionSync);
+document.addEventListener('touchend', scheduleSelectionSync);
